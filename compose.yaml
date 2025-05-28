@@ -1,0 +1,7 @@
+﻿services:
+  bookcatalog.api:
+    image: bookcatalog.api
+    build:
+      context: .
+      dockerfile: BookCatalog.Api/Dockerfile
+
