@@ -14,6 +14,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// Testing Api endpoints
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
