@@ -1,11 +1,15 @@
+using System;
+
 namespace BookCatalog.Api.Models;
 
 public class Book
 {
-    int Id { get; init; }
-    string Title { get; init; }
-    string Author { get; init; }
-    string ISBN { get; init; }
-    string PublicationYear { get; init; }
-    string Genre { get; init; }
+    // Using 'Id' so that it works with ef core
+    public Guid Id { get; set; }
+
+    public string Title { get; init; }
+    public string Author { get; init; }
+    public string ISBN { get; init; }
+    public string PublicationYear { get; init; }
+    public string Genre { get; init; }
 }
