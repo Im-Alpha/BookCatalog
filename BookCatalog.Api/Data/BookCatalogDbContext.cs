@@ -9,7 +9,7 @@ namespace BookCatalog.Api.Data
         public BookCatalogDbContext(DbContextOptions<BookCatalogDbContext> options) : base(options)
         {
         }
-        DbSet<Book> Books { get; set; }
+        public DbSet<Book> Books { get; set; }
     }  
 }
 
