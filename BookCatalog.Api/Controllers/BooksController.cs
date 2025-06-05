@@ -1,6 +1,7 @@
 using BookCatalog.Api.Data; // For DbContext (if not using a service layer yet)
 using BookCatalog.Api.Models; // For Book entity
 using BookCatalog.Api.Dto; // For DTOs
+using BookCatalog.Api.Services; // Services
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore; // For ToListAsync, FindAsync etc.
 using System;
@@ -14,43 +15,30 @@ namespace BookCatalog.Api.Controllers
     [Route("api/[controller]")] // Sets the base route to /api/Books
     public class BooksController : ControllerBase
     {
-        private readonly BookCatalogDbContext _context; // Use a service layer here later!
+        // Use service layer to connect to DB
+        private readonly IBookService _bookService;
 
-        // Constructor for Dependency Injection
-        public BooksController(BookCatalogDbContext context)
+        // Set up Connection variable for DB
+        public BooksController(IBookService bookService)
         {
-            _context = context;
+            _bookService = bookService;
         }
 
         // --- GET Endpoints ---
-        // GET api/books
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<BookDto>>> GetBooks()
-        {
-            var books = await _context.Books.ToListAsync();
-            // In a real app, you'd map these to BookDto using AutoMapper or manually
-            // For now, a simple select to BookDto
-            // Select is part of a LINQ(Language Integrated Query)
-            // 
-            var bookDtos = books.Select(b
-                => new BookDto
-            {
-                Id = b.Id,
-                Title = b.Title,
-                Author = b.Author,
-                ISBN = b.ISBN,
-                PublicationYear = b.PublicationYear,
-                Genre = b.Genre
-            }).ToList();
 
-            return Ok(bookDtos);
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            var books = await _bookService.GetAllBooksAsync();
+            return Ok(books);
         }
+        
 
         // GET api/books/{id}
         [HttpGet("{id}")] // {id} is a route parameter
-        public async Task<ActionResult<BookDto>> GetBook(Guid id) // Parameter comes from the route
+        public async Task<ActionResult<Book>> GetBooksById(int id) // Parameter comes from the route
         {
-            var book = await _context.Books.FindAsync(id); // start the search for the book by index
+            var book = await _bookService.GetBooksByIdAsync(id); // start the search for the book by index
 
             // Check if book index exists
             if (book == null)
@@ -69,115 +57,59 @@ namespace BookCatalog.Api.Controllers
                 Genre = book.Genre
             };
 
-            return Ok(bookDto); // HTTP 200
+            return Ok(book); // HTTP 200
         }
 
         // --- POST Endpoint ---
         // POST api/books
         [HttpPost]
-        public async Task<ActionResult<BookDto>> CreateBook([FromBody] CreateBookRequestDto request) // Parameter comes from the request BODY
+        public async Task<ActionResult<Book>> AddBook([FromBody] Book book) // Parameter comes from the request BODY
         {
-            // IMPORTANT: [FromBody] tells ASP.NET Core to deserialize the JSON request body
-            // into an instance of CreateBookRequestDto.
-
-            // Validate the incoming request DTO
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState); // Returns HTTP 400 with validation errors
-            }
-
-            // Map the DTO to your actual Book entity
-            var book = new Book
-            {
-                Id = Guid.NewGuid(), // Generate a new ID here or let the DB do it
-                Title = request.Title,
-                Author = request.Author,
-                ISBN = request.ISBN,
-                PublicationYear = request.PublicationYear,
-                Genre = request.Genre
-            };
-
-            _context.Books.Add(book); // Add the entity to the DbContext
-            await _context.SaveChangesAsync(); // Commit changes to the database
-
-            // Map the created entity back to a BookDto for the response
-            var bookDto = new BookDto
-            {
-                Id = book.Id,
-                Title = book.Title,
-                Author = book.Author,
-                ISBN = book.ISBN,
-                PublicationYear = book.PublicationYear,
-                Genre = book.Genre
-            };
-
-            // Return 201 Created and the location of the new resource
-            return CreatedAtAction(nameof(GetBook), new { id = book.Id }, bookDto);
+            var createdBook = await _bookService.AddBookAsync(book);
+            // returns 201 Created
+            // Location: /api/books/{id}
+            return CreatedAtAction(nameof(AddBook), new { id = createdBook.Id }, createdBook);
         }
 
-        // --- PUT Endpoint ---
+        // --- PUT Endpoint (UPDATE Book)---
         // PUT api/books/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateBook(Guid id, [FromBody] BookDto bookDto) // Using BookDto for simplicity here
+        public async Task<IActionResult> UpdateBook(Guid id, [FromBody] Book updatedBook)
         {
-            if (id != bookDto.Id)
+            if (id != updatedBook.Id)
             {
                 return BadRequest("ID in URL does not match ID in request body.");
             }
+            
+            // Create a variable to hold the result
+            var res = await _bookService.UpdateBookAsync(updatedBook);
 
-            var book = await _context.Books.FindAsync(id);
-            if (book == null)
+            if (!res)
             {
                 return NotFound();
             }
 
-            // Update entity properties from DTO
-            book.Title = bookDto.Title;
-            book.Author = bookDto.Author;
-            book.ISBN = bookDto.ISBN;
-            book.PublicationYear = bookDto.PublicationYear;
-            book.Genre = bookDto.Genre;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!BookExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw; // Re-throw if it's not a NotFound issue
-                }
-            }
-
-            return NoContent(); // HTTP 204
+            return NoContent(); // HTTP 204 - success
         }
 
         // --- DELETE Endpoint ---
         // DELETE api/books/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteBook(Guid id)
+        public async Task<IActionResult> DeleteBook(int id)
         {
-            var book = await _context.Books.FindAsync(id);
-            if (book == null)
+            var deleted = await _bookService.DeleteBookAsync(id);
+            if (!deleted)
             {
                 return NotFound();
             }
-
-            _context.Books.Remove(book);
-            await _context.SaveChangesAsync();
 
             return NoContent(); // HTTP 204
         }
 
         // Helper method to check if a book exists
-        private bool BookExists(Guid id)
-        {
-            return _context.Books.Any(e => e.Id == id);
-        }
+       // private bool BookExists(Guid id)
+        //{
+         //   return _bookService.Books.Any(e => e.Id == id);
+        //}
     }
 }

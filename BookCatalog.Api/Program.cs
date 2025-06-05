@@ -1,5 +1,5 @@
 using BookCatalog.Api.Data;
-
+using BookCatalog.Api.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +22,10 @@ builder.Services.AddDbContext<BookCatalogDbContext>(options =>
 });
 
 // DB Connection -- End --
+
+// Registering service
+builder.Services.AddScoped<IBookService>();
+
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
