@@ -36,7 +36,7 @@ namespace BookCatalog.Api.Controllers
 
         // GET api/books/{id}
         [HttpGet("{id}")] // {id} is a route parameter
-        public async Task<ActionResult<Book>> GetBooksById(int id) // Parameter comes from the route
+        public async Task<ActionResult<Book>> GetBooksById(Guid id) // Parameter comes from the route
         {
             var book = await _bookService.GetBooksByIdAsync(id); // start the search for the book by index
 
@@ -47,15 +47,15 @@ namespace BookCatalog.Api.Controllers
             }
 
             // Map the entity to the DTO before returning
-            var bookDto = new BookDto
-            {
-                Id = book.Id,
-                Title = book.Title,
-                Author = book.Author,
-                ISBN = book.ISBN,
-                PublicationYear = book.PublicationYear,
-                Genre = book.Genre
-            };
+            // var bookDto = new BookDto
+            // {
+            //     Id = book.Id,
+            //     Title = book.Title,
+            //     Author = book.Author,
+            //     ISBN = book.ISBN,
+            //     PublicationYear = book.PublicationYear,
+            //     Genre = book.Genre
+            // };
 
             return Ok(book); // HTTP 200
         }
@@ -68,7 +68,7 @@ namespace BookCatalog.Api.Controllers
             var createdBook = await _bookService.AddBookAsync(book);
             // returns 201 Created
             // Location: /api/books/{id}
-            return CreatedAtAction(nameof(AddBook), new { id = createdBook.Id }, createdBook);
+            return CreatedAtAction(nameof(AddBook), new { Guid = createdBook.Id }, createdBook);
         }
 
         // --- PUT Endpoint (UPDATE Book)---
@@ -95,7 +95,7 @@ namespace BookCatalog.Api.Controllers
         // --- DELETE Endpoint ---
         // DELETE api/books/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteBook(int id)
+        public async Task<IActionResult> DeleteBook(Guid id)
         {
             var deleted = await _bookService.DeleteBookAsync(id);
             if (!deleted)

@@ -36,13 +36,11 @@ namespace BookCatalog.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ISBN")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("ISBN")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("PublicationYear")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("PublicationYear")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()

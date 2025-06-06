@@ -22,7 +22,7 @@ public class IBookService
     }
 
     // Get specific book based on id
-    public async Task<Book?> GetBooksByIdAsync(int id) // Important to not use Task<List<Book>> because we only want 1 
+    public async Task<Book?> GetBooksByIdAsync(Guid id) // Important to not use Task<List<Book>> because we only want 1 
     {
         return await _dbContext.Books.FindAsync(id);
     }
@@ -59,7 +59,7 @@ public class IBookService
     }
 
     // Delete a book from the library(DB)
-    public async Task<bool> DeleteBookAsync(int id)
+    public async Task<bool> DeleteBookAsync(Guid id)
     {
         // Find if the book exists
         var existingBook = await _dbContext.Books.FindAsync(id);

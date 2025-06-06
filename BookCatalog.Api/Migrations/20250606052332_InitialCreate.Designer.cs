@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BookCatalog.Api.Migrations
 {
     [DbContext(typeof(BookCatalogDbContext))]
-    [Migration("20250529052533_InitialCreate")]
+    [Migration("20250606052332_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -39,13 +39,11 @@ namespace BookCatalog.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ISBN")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("ISBN")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("PublicationYear")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("PublicationYear")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()

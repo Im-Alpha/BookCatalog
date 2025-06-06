@@ -18,8 +18,8 @@ namespace BookCatalog.Api.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Title = table.Column<string>(type: "text", nullable: false),
                     Author = table.Column<string>(type: "text", nullable: false),
-                    ISBN = table.Column<string>(type: "text", nullable: false),
-                    PublicationYear = table.Column<string>(type: "text", nullable: false),
+                    ISBN = table.Column<int>(type: "integer", nullable: false),
+                    PublicationYear = table.Column<int>(type: "integer", nullable: false),
                     Genre = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
