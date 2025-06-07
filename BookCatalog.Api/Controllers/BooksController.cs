@@ -91,6 +91,27 @@ namespace BookCatalog.Api.Controllers
 
             return NoContent(); // HTTP 204 - success
         }
+        
+        // -- PATCH Endpoint for updating without all of the information --
+        // PATCH api/books/{id}
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchBook(Guid id, [FromBody] BookPatchDto patch)
+        {
+            var book = await _bookService.GetBooksByIdAsync(id);
+            if (book == null) return NotFound();
+
+            // Apply only provided fields
+            if (patch.Title != null) book.Title = patch.Title;
+            if (patch.Author != null) book.Author = patch.Author;
+            if (patch.PublicationYear.HasValue) book.PublicationYear = patch.PublicationYear.Value;
+            if (patch.Genre != null) book.Genre = patch.Genre;
+
+            await _bookService.SaveChangesAsync(); // or _dbContext.SaveChangesAsync()
+
+            return NoContent();
+        }
+
+
 
         // --- DELETE Endpoint ---
         // DELETE api/books/{id}

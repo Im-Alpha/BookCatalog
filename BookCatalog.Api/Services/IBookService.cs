@@ -57,6 +57,13 @@ public class IBookService
         await _dbContext.SaveChangesAsync();
         return true;
     }
+    
+    // Patch an existing book
+    public async Task SaveChangesAsync()
+    {
+        await _dbContext.SaveChangesAsync();
+    }
+
 
     // Delete a book from the library(DB)
     public async Task<bool> DeleteBookAsync(Guid id)
