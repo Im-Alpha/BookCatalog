@@ -27,6 +27,10 @@ builder.Services.AddDbContext<BookCatalogDbContext>(options =>
 builder.Services.AddScoped<IBookService>();
 
 
+// Add AutoMapper for BookDto
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

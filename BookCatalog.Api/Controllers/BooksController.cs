@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq; // For LINQ operations
 using System.Threading.Tasks;
+using AutoMapper;
 
 namespace BookCatalog.Api.Controllers
 {
@@ -17,15 +18,22 @@ namespace BookCatalog.Api.Controllers
     {
         // Use service layer to connect to DB
         private readonly IBookService _bookService;
+        // Set up Dto to abstract book data
+        private readonly IMapper _mapper;
 
         // Set up Connection variable for DB
         public BooksController(IBookService bookService)
         {
             _bookService = bookService;
         }
+        // Set up Mapper variable
+        public BooksController(IMapper mapper)
+        {
+            _mapper = mapper;
+        }
 
+        
         // --- GET Endpoints ---
-
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -45,66 +53,71 @@ namespace BookCatalog.Api.Controllers
             {
                 return NotFound(); // HTTP 404
             }
-
-            // Map the entity to the DTO before returning
-            // var bookDto = new BookDto
-            // {
-            //     Id = book.Id,
-            //     Title = book.Title,
-            //     Author = book.Author,
-            //     ISBN = book.ISBN,
-            //     PublicationYear = book.PublicationYear,
-            //     Genre = book.Genre
-            // };
-
-            return Ok(book); // HTTP 200
+            
+            // Set up dto to map values and return Dto object
+            var bookDto = _mapper.Map<BookDto>(book);
+            return Ok(bookDto); // HTTP 200
         }
 
+        
         // --- POST Endpoint ---
         // POST api/books
         [HttpPost]
-        public async Task<ActionResult<Book>> AddBook([FromBody] Book book) // Parameter comes from the request BODY
+        public async Task<ActionResult<Book>> AddBook([FromBody] CreateBookDto createDto) // Parameter comes from the request BODY
         {
-            var createdBook = await _bookService.AddBookAsync(book);
+            // Creat mapping
+            var book = _mapper.Map<Book>(createDto);
+            // Wait for data
+            await _bookService.AddBookAsync(book);
+            
             // returns 201 Created
             // Location: /api/books/{id}
-            return CreatedAtAction(nameof(AddBook), new { Guid = createdBook.Id }, createdBook);
+            
+            // Get result 
+            var resDto = _mapper.Map<BookDto>(book);
+            // Return result
+            return CreatedAtAction(nameof(AddBook), new { Guid = book.Id }, resDto);
         }
+
 
         // --- PUT Endpoint (UPDATE Book)---
         // PUT api/books/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateBook(Guid id, [FromBody] Book updatedBook)
+        public async Task<IActionResult> UpdateBook(Guid id, [FromBody] BookUpdateDto updateDto)
         {
-            if (id != updatedBook.Id)
-            {
-                return BadRequest("ID in URL does not match ID in request body.");
-            }
-            
-            // Create a variable to hold the result
-            var res = await _bookService.UpdateBookAsync(updatedBook);
-
-            if (!res)
+            // Search for book
+            var book = await _bookService.GetBooksByIdAsync(id);
+            // Check if book exists
+            if (book == null)
             {
                 return NotFound();
             }
+            // Create Dto mapping
+            _mapper.Map(updateDto, book);
+            // Create a variable to hold the result
+            await _bookService.SaveChangesAsync();
 
-            return NoContent(); // HTTP 204 - success
+            // Return Success
+            return NoContent(); // HTTP 204 
         }
+        
         
         // -- PATCH Endpoint for updating without all of the information --
         // PATCH api/books/{id}
         [HttpPatch("{id}")]
-        public async Task<IActionResult> PatchBook(Guid id, [FromBody] BookPatchDto patch)
+        public async Task<IActionResult> PatchBook(Guid id, [FromBody] BookPatchDto patchDto)
         {
             var book = await _bookService.GetBooksByIdAsync(id);
             if (book == null) return NotFound();
 
             // Apply only provided fields
-            if (patch.Title != null) book.Title = patch.Title;
-            if (patch.Author != null) book.Author = patch.Author;
-            if (patch.PublicationYear.HasValue) book.PublicationYear = patch.PublicationYear.Value;
-            if (patch.Genre != null) book.Genre = patch.Genre;
+            // if (patch.Title != null) book.Title = patch.Title;
+            // if (patch.Author != null) book.Author = patch.Author;
+            // if (patch.PublicationYear.HasValue) book.PublicationYear = patch.PublicationYear.Value;
+            // if (patch.Genre != null) book.Genre = patch.Genre;
+            
+            // Can remove all lines above with Dto AutoMapper and consolidate into single line
+            _mapper.Map(patchDto, book);
 
             await _bookService.SaveChangesAsync(); // or _dbContext.SaveChangesAsync()
 
@@ -114,6 +127,7 @@ namespace BookCatalog.Api.Controllers
 
 
         // --- DELETE Endpoint ---
+        // NOTE: For a different API a soft delete might be better for non-sensitive data and audit logs
         // DELETE api/books/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBook(Guid id)
@@ -126,6 +140,18 @@ namespace BookCatalog.Api.Controllers
 
             return NoContent(); // HTTP 204
         }
+        
+        // Add IsDeleted field to DB
+        // public async Task<bool> SoftDeleteBookAsync(Guid id)
+        // {
+        //     var book = await _dbContext.Books.FindAsync(id);
+        //     if (book == null || book.IsDeleted) return false;
+        //
+        //     book.IsDeleted = true;
+        //     await _dbContext.SaveChangesAsync();
+        //     return true;
+        // }
+
 
         // Helper method to check if a book exists
        // private bool BookExists(Guid id)
